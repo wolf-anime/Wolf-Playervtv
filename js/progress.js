@@ -45,15 +45,46 @@ export function initProgress() {
 
   document.addEventListener('mousemove', e => {
     if (!state.isDragging) return;
-    seekTo(e);
     const rect = progressWrap.getBoundingClientRect();
-    const x = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
+    const x = Math.max(0, Math.min(rect.width, (e.touches ? e.touches[0].clientX : e.clientX) - rect.left));
+    const pct = x / rect.width;
+    
+    // Update UI only
+    progressFill.style.width = (pct * 100) + '%';
+    progressThumb.style.left = (pct * 100) + '%';
     progressTooltip.style.left = x + 'px';
-    progressTooltip.textContent = fmt((x / rect.width) * (video.duration || 0));
+    progressTooltip.textContent = fmt(pct * (video.duration || 0));
   });
+
+  document.addEventListener('touchmove', e => {
+    if (!state.isDragging) return;
+    const rect = progressWrap.getBoundingClientRect();
+    const x = Math.max(0, Math.min(rect.width, e.touches[0].clientX - rect.left));
+    const pct = x / rect.width;
+
+    // Update UI only
+    progressFill.style.width = (pct * 100) + '%';
+    progressThumb.style.left = (pct * 100) + '%';
+    progressTooltip.style.left = x + 'px';
+    progressTooltip.textContent = fmt(pct * (video.duration || 0));
+  }, { passive: true });
   
-  document.addEventListener('mouseup',  () => { state.isDragging = false; });
-  document.addEventListener('touchend', () => { state.isDragging = false; });
+  document.addEventListener('mouseup',  (e) => { 
+    if (state.isDragging) {
+      state.isDragging = false; 
+      seekTo(e);
+    }
+  });
+
+  document.addEventListener('touchend', (e) => { 
+    if (state.isDragging) {
+      state.isDragging = false; 
+      const rect = progressWrap.getBoundingClientRect();
+      const x = (e.changedTouches ? e.changedTouches[0].clientX : 0) - rect.left;
+      const pct = Math.max(0, Math.min(1, x / rect.width));
+      if (video.duration) video.currentTime = pct * video.duration;
+    }
+  });
 
   progressWrap.addEventListener('mousemove', e => {
     const rect = progressWrap.getBoundingClientRect();

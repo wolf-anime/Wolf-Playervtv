@@ -60,6 +60,7 @@ video {
   width: 100%; height: 100%;
   display: block;
   object-fit: contain;
+  background: #000;
   -webkit-tap-highlight-color: transparent;
 }
 .player-container.overfit video { object-fit: cover; }
@@ -70,6 +71,7 @@ video {
   inset: 0;
   width: 100%;
   height: 100%;
+  background-color: #000;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

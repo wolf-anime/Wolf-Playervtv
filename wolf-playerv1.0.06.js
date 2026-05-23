@@ -828,11 +828,9 @@ class WolfPlayer {
 
   // Progress methods
   updateProgress() {
-    const pct = this.video.duration ? (this.video.currentTime / this.video.duration) * 100 : 0;
-    this.progressFill.style.width = pct + '%';
-    this.progressThumb.style.left = pct + '%';
     const currentEl = this.container.querySelector('#progressTimeCurrent');
     const durationEl = this.container.querySelector('#progressTimeDuration');
+    const progressWrap = this.container.querySelector('#progressWrap');
     
     // Detectar si es en vivo:
     // 1. Si el manifest HLS indicó que es en vivo
@@ -841,28 +839,25 @@ class WolfPlayer {
     this.isLive = this.hlsManifestIsLive || !isFinite(this.video.duration) || this.video.duration === 0 || this.video.duration > 86400;
     
     if (this.isLive) {
-      // En vivo: mostrar solo el tiempo actual y el icono EN VIVO
-      if (currentEl) {
-        currentEl.textContent = this.fmt(this.video.currentTime);
-        currentEl.style.display = 'inline';
-      }
-      if (durationEl) {
-        durationEl.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block;margin-right:6px;vertical-align:middle;color:#ff2a85"><circle cx="12" cy="12" r="10"></circle></svg><span style="color:#ff2a85;font-weight:700;font-size:0.85rem">EN VIVO</span>';
-        durationEl.style.display = 'flex';
-        durationEl.style.alignItems = 'center';
-        durationEl.style.gap = '4px';
-        durationEl.style.marginLeft = 'auto';
+      // En vivo: ocultar completamente la barra de progreso
+      if (progressWrap) {
+        progressWrap.style.display = 'none';
       }
     } else {
-      // VOD: mostrar tiempo actual y duración total
+      // VOD: mostrar barra de progreso normal
+      if (progressWrap) {
+        progressWrap.style.display = 'block';
+      }
+      
+      const pct = this.video.duration ? (this.video.currentTime / this.video.duration) * 100 : 0;
+      this.progressFill.style.width = pct + '%';
+      this.progressThumb.style.left = pct + '%';
+      
       if (currentEl) {
         currentEl.textContent = this.fmt(this.video.currentTime);
-        currentEl.style.display = 'inline';
       }
       if (durationEl) {
         durationEl.innerHTML = this.fmt(this.video.duration);
-        durationEl.style.display = 'inline';
-        durationEl.style.marginLeft = 'auto';
       }
     }
   }

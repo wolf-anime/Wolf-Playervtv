@@ -834,25 +834,35 @@ class WolfPlayer {
     const currentEl = this.container.querySelector('#progressTimeCurrent');
     const durationEl = this.container.querySelector('#progressTimeDuration');
     
-    if (currentEl) currentEl.textContent = this.fmt(this.video.currentTime);
-    
     // Detectar si es en vivo:
     // 1. Si el manifest HLS indicó que es en vivo
     // 2. Si la duración es infinita o 0
     // 3. Si la duración es muy grande (más de 24 horas)
     this.isLive = this.hlsManifestIsLive || !isFinite(this.video.duration) || this.video.duration === 0 || this.video.duration > 86400;
     
-    if (durationEl) {
-      if (this.isLive) {
-        // Mostrar icono de en vivo en lugar de duración
+    if (this.isLive) {
+      // En vivo: mostrar solo el tiempo actual y el icono EN VIVO
+      if (currentEl) {
+        currentEl.textContent = this.fmt(this.video.currentTime);
+        currentEl.style.display = 'inline';
+      }
+      if (durationEl) {
         durationEl.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block;margin-right:6px;vertical-align:middle;color:#ff2a85"><circle cx="12" cy="12" r="10"></circle></svg><span style="color:#ff2a85;font-weight:700;font-size:0.85rem">EN VIVO</span>';
         durationEl.style.display = 'flex';
         durationEl.style.alignItems = 'center';
         durationEl.style.gap = '4px';
-      } else {
-        // Mostrar duración normal
+        durationEl.style.marginLeft = 'auto';
+      }
+    } else {
+      // VOD: mostrar tiempo actual y duración total
+      if (currentEl) {
+        currentEl.textContent = this.fmt(this.video.currentTime);
+        currentEl.style.display = 'inline';
+      }
+      if (durationEl) {
         durationEl.innerHTML = this.fmt(this.video.duration);
         durationEl.style.display = 'inline';
+        durationEl.style.marginLeft = 'auto';
       }
     }
   }
@@ -1004,6 +1014,9 @@ class WolfPlayer {
   async loadSource(url) {
     if (!url) return;
     this.destroyAll();
+    
+    // Resetear flag de en vivo
+    this.hlsManifestIsLive = false;
     
     // No modificar el título aquí - mantener el configurado en init()
 

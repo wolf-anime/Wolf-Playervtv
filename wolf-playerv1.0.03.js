@@ -399,6 +399,7 @@ class WolfPlayer {
     this.tapTimer = null;
     this.tapCount = 0;
     this.isChangingQuality = false;
+    this.isLive = false; // Detectar si es en vivo
   }
 
   // Apply custom color theme
@@ -831,8 +832,25 @@ class WolfPlayer {
     this.progressThumb.style.left = pct + '%';
     const currentEl = this.container.querySelector('#progressTimeCurrent');
     const durationEl = this.container.querySelector('#progressTimeDuration');
+    
     if (currentEl) currentEl.textContent = this.fmt(this.video.currentTime);
-    if (durationEl) durationEl.textContent = this.fmt(this.video.duration);
+    
+    // Detectar si es en vivo (duración infinita o muy grande)
+    this.isLive = !isFinite(this.video.duration) || this.video.duration === 0 || this.video.duration > 86400;
+    
+    if (durationEl) {
+      if (this.isLive) {
+        // Mostrar icono de en vivo en lugar de duración
+        durationEl.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;margin-right:4px;vertical-align:middle;color:#ff2a85"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg><span style="color:#ff2a85;font-weight:700">EN VIVO</span>';
+        durationEl.style.display = 'flex';
+        durationEl.style.alignItems = 'center';
+        durationEl.style.gap = '4px';
+      } else {
+        // Mostrar duración normal
+        durationEl.innerHTML = this.fmt(this.video.duration);
+        durationEl.style.display = 'inline';
+      }
+    }
   }
 
   updateBuffered() {
@@ -1026,6 +1044,9 @@ class WolfPlayer {
       });
       this.hlsInstance.on(Hls.Events.LEVEL_SWITCHED, (_, d) => this.updateQualityActive(d.level));
       this.hlsInstance.on(Hls.Events.MANIFEST_LOADED, (_, d) => {
+        // Detectar si es en vivo (playlist sin duración total)
+        this.isLive = d.levels && d.levels.length > 0 && !d.levels[0].duration;
+        
         // Filtrar y construir menú solo con calidades únicas y válidas
         const uniqueLevels = this.getUniqueLevels(d.levels);
         this.buildQualityMenu(uniqueLevels);

@@ -259,6 +259,12 @@ class WolfPlayer {
       <!-- CTRL ROW: velocidad · bloquear · calidad · spacer · volumen · pantalla completa -->
       <div class="ctrl-row">
 
+        <!-- INDICADOR EN VIVO -->
+        <div id="liveIndicator" style="display:none;padding:0 12px;display:flex;align-items:center;gap:6px;color:#ff2a85;font-weight:700;font-size:0.85rem;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"></circle></svg>
+          <span>EN VIVO</span>
+        </div>
+
         <!-- VELOCIDAD -->
         <div class="select-btn-wrap">
           <button class="opt-btn" tabindex="-1">
@@ -831,6 +837,7 @@ class WolfPlayer {
     const currentEl = this.container.querySelector('#progressTimeCurrent');
     const durationEl = this.container.querySelector('#progressTimeDuration');
     const progressWrap = this.container.querySelector('#progressWrap');
+    const liveIndicator = this.container.querySelector('#liveIndicator');
     
     // Detectar si es en vivo:
     // 1. Si el manifest HLS indicó que es en vivo
@@ -839,14 +846,20 @@ class WolfPlayer {
     this.isLive = this.hlsManifestIsLive || !isFinite(this.video.duration) || this.video.duration === 0 || this.video.duration > 86400;
     
     if (this.isLive) {
-      // En vivo: ocultar completamente la barra de progreso
+      // En vivo: ocultar completamente la barra de progreso y mostrar indicador EN VIVO
       if (progressWrap) {
         progressWrap.style.display = 'none';
       }
+      if (liveIndicator) {
+        liveIndicator.style.display = 'flex';
+      }
     } else {
-      // VOD: mostrar barra de progreso normal
+      // VOD: mostrar barra de progreso normal y ocultar indicador EN VIVO
       if (progressWrap) {
         progressWrap.style.display = 'block';
+      }
+      if (liveIndicator) {
+        liveIndicator.style.display = 'none';
       }
       
       const pct = this.video.duration ? (this.video.currentTime / this.video.duration) * 100 : 0;

@@ -400,6 +400,7 @@ class WolfPlayer {
     this.tapCount = 0;
     this.isChangingQuality = false;
     this.isLive = false; // Detectar si es en vivo
+    this.hlsManifestIsLive = false; // Flag para detectar en vivo desde manifest
   }
 
   // Apply custom color theme
@@ -835,13 +836,16 @@ class WolfPlayer {
     
     if (currentEl) currentEl.textContent = this.fmt(this.video.currentTime);
     
-    // Detectar si es en vivo (duración infinita o muy grande)
-    this.isLive = !isFinite(this.video.duration) || this.video.duration === 0 || this.video.duration > 86400;
+    // Detectar si es en vivo:
+    // 1. Si el manifest HLS indicó que es en vivo
+    // 2. Si la duración es infinita o 0
+    // 3. Si la duración es muy grande (más de 24 horas)
+    this.isLive = this.hlsManifestIsLive || !isFinite(this.video.duration) || this.video.duration === 0 || this.video.duration > 86400;
     
     if (durationEl) {
       if (this.isLive) {
         // Mostrar icono de en vivo en lugar de duración
-        durationEl.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;margin-right:4px;vertical-align:middle;color:#ff2a85"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg><span style="color:#ff2a85;font-weight:700">EN VIVO</span>';
+        durationEl.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block;margin-right:6px;vertical-align:middle;color:#ff2a85"><circle cx="12" cy="12" r="10"></circle></svg><span style="color:#ff2a85;font-weight:700;font-size:0.85rem">EN VIVO</span>';
         durationEl.style.display = 'flex';
         durationEl.style.alignItems = 'center';
         durationEl.style.gap = '4px';
@@ -1044,8 +1048,13 @@ class WolfPlayer {
       });
       this.hlsInstance.on(Hls.Events.LEVEL_SWITCHED, (_, d) => this.updateQualityActive(d.level));
       this.hlsInstance.on(Hls.Events.MANIFEST_LOADED, (_, d) => {
-        // Detectar si es en vivo (playlist sin duración total)
-        this.isLive = d.levels && d.levels.length > 0 && !d.levels[0].duration;
+        // Detectar si es en vivo analizando el manifest
+        // En HLS en vivo, el manifest tiene EXT-X-PLAYLIST-TYPE:EVENT o no tiene duración total
+        if (d.levels && d.levels.length > 0) {
+          // Verificar si algún nivel tiene duración indefinida (en vivo)
+          const hasInfiniteDuration = d.levels.some(level => !isFinite(level.duration) || level.duration === 0);
+          this.hlsManifestIsLive = hasInfiniteDuration || (d.live === true);
+        }
         
         // Filtrar y construir menú solo con calidades únicas y válidas
         const uniqueLevels = this.getUniqueLevels(d.levels);
